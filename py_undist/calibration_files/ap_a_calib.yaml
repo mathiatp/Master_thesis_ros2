@@ -1,0 +1,20 @@
+image_width: 1224
+image_height: 1024
+camera_name: rgb_cam_ap_a
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [729.2438330988962,0.,600.5203572690191,0.,729.1984243446789,509.0581357611703,0.,0.,1.]
+distortion_model: radtan
+distortion_coefficients:
+  rows: 1
+  cols: 4
+  data: [-0.017589759924144, 0.04421879014766278, 0.0012400483878534973, 0.0011640622807359356]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1,0.,0.,0.,1.,0.,0.,0.,1.]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [755.81158447,0.,602.83737037,0.,0.,756.68804932,510.40123492,0.,0.,0.,1.,0.]

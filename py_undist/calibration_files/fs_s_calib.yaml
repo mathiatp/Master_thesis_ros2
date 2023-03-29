@@ -1,0 +1,20 @@
+image_width: 1224
+image_height: 1024
+camera_name: rgb_cam_fs_s
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [730.6568086634907,0.,610.9503297522627,0.,730.1823704960767,517.7102684371013,0.,0.,1.]
+distortion_model: radtan
+distortion_coefficients:
+  rows: 1
+  cols: 4
+  data: [-0.021118098081350487,0.05120806720181221,-0.0024081132355889576,0.0013884858532667924]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1,0.,0.,0.,1.,0.,0.,0.,1.]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [761.04272461,0.,612.65931253,0.,0.,759.44140625,513.68368196,0.,0.,0.,1.,0.]

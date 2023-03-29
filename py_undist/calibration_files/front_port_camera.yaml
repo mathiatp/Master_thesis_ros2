@@ -1,0 +1,20 @@
+image_width: 1224
+image_height: 1024
+camera_name: blackfly_s_front_port
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [729.8369591195927,0,611.0483637367711,0,729.1621017503458,517.8025404367396,0,0,1.0]
+distortion_model: radtan
+distortion_coefficients:
+  rows: 1
+  cols: 4
+  data: [-0.021986318849553096,0.04349001161244268,0.0008369136914545188,-0.0012525386469190087]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [729.8369591195927,0,611.0483637367711,0,0,729.1621017503458,517.8025404367396,0,0,0,1.0,0]

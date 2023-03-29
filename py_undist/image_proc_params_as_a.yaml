@@ -1,0 +1,10 @@
+image_proc:
+  rectify_mono: true
+  rectify_color: true
+  camera_namespace: rgb_cam_as_s
+    camera_info_topic: /rgb_cam_as_s/camera_info
+    image_raw_topic: /rgb_cam_as_s/image_raw
+  ~approximate_sync: true
+  ~queue_size: 10
+  ~num_worker_threads: 4
+  ~output_encoding: bgr8
