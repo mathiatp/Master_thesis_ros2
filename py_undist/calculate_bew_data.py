@@ -64,10 +64,10 @@ def interpolate(values, vtx, wts):
 
 def calculate_im_pos(height, width, K, camera_rotation, camera_translation, name):
     try:
-        file_name_pixel_position = '/home/mathias/Documents/Master_Thesis/pixel_position_arrays/pixel_position_'+name+'.npy'
+        file_name_pixel_position = 'resource/pixel_position_arrays/pixel_position_'+name+'.npy'
         im_pos = np.load(file_name_pixel_position)
         return im_pos
-
+    
     except OSError:
         print('Could not find file: ' + file_name_pixel_position + '. \nStarting to calculate pixel positions for camera ' + name + '.')
 
