@@ -1,5 +1,4 @@
 import cProfile
-import os
 import pstats
 import rclpy
 from rclpy.node import Node
@@ -18,6 +17,7 @@ from py_undist.file_handling import camera_name_calib_yaml_to_K_D
 from cv_bridge import CvBridge
 import select
 import sys
+import os
 
 def make_BEW(vessel_mA2: mA2):
     start = time.time()
@@ -32,7 +32,8 @@ def make_BEW(vessel_mA2: mA2):
                         vessel_mA2.ap_a.pixel_positions_masked,
                         vessel_mA2.as_a.pixel_positions_masked,
                         vessel_mA2.as_s.pixel_positions_masked,
-                        vessel_mA2.black_pixel_pos))
+                        vessel_mA2.black_pixel_pos))#,
+                        # vessel_mA2.ferry_pixel_pos))
 
     rgb_fp_p = calculate_rgb_matrix_for_BEW(vessel_mA2.fp_p.im,vessel_mA2.fp_p.image_mask)
     rgb_fp_f = calculate_rgb_matrix_for_BEW(vessel_mA2.fp_f.im,vessel_mA2.fp_f.image_mask)
@@ -51,7 +52,8 @@ def make_BEW(vessel_mA2: mA2):
                      rgb_ap_a,
                      rgb_as_a,
                      rgb_as_s,
-                     vessel_mA2.black_pixel_rgb))
+                     vessel_mA2.black_pixel_rgb))#,
+                    #  vessel_mA2.ferry_pixel_rgb))
 
 
     # Delaunay 4
@@ -202,21 +204,14 @@ class BEWImage(Node):
             QoSProfile(depth=10,
                        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                        reliability=QoSReliabilityPolicy.RELIABLE))
-        self.bridge = CvBridge()
-        
-        # Set up file logging
+        self.bridge = CvBridge()    
+         # Set up file logging
         print('Init logger')
         # log_file_path = 'resource/Logs/BEW_node.log'
         self.logger = logging.get_logger('BEW_logger')
         #camera name | time since last image recieved | time since msg sent | 
         self.logger.info('camera_name;time_since_last_image;message')
         
-        
-        
-  
-        
-
-
     def msg_to_cv(self, msg):
         cv_image = None
         try:
@@ -247,13 +242,10 @@ class BEWImage(Node):
     def image_callback(self, msg):
         # Extract the camera index from the topic name
         id = msg.header.frame_id
-        # print('Time msg: ' + str(msg.header.stamp))
+        # print(id)
+        # id = topic_name[16:]
+        # print('Recieved image from: '+str(id))
 
-        # msg_sent_time = Time.from_msg(msg.header.stamp)
-        # msg_sent_time_nano = msg_sent_time.nanoseconds
-        # self.time_since_last_im[id] = msg_sent_time_nano
-        # print('Time msg: ' + str(msg_sent_time_nano))
-        
         recieve_time_nanosec = self.get_clock().now().nanoseconds
         diff_time = recieve_time_nanosec - self.recieve_time_last_im_nanosec[id]
         self.recieve_time_last_im_nanosec[id] = recieve_time_nanosec
@@ -268,19 +260,13 @@ class BEWImage(Node):
             self.images_recieved_dict[camera_delayed] = 1
         
         #camera name | time since last image recieved | time since msg sent | 
-        
-        
-        # print(id)
-        # id = topic_name[16:]
-        # print('Recieved image from: '+str(id))
-        
+
+
         if(id =='fp_p'):
-            
             self.vessel_mA2.fp_p._im = self.msg_to_cv(msg)
             self.images_recieved[0] = 1
 
         elif(id =='fp_f'):
-
             self.vessel_mA2.fp_f._im = self.msg_to_cv(msg)
             self.images_recieved[1] = 1
             
@@ -309,7 +295,7 @@ class BEWImage(Node):
             self.images_recieved[7] = 1
         
 
-        # If we have received images from all 8 cameras, combine them and publish the result
+        
         if all(images == 1 for images in self.images_recieved_dict.values()):
             self.skip_until_first_BEW_made = 0
             
@@ -328,8 +314,6 @@ class BEWImage(Node):
             
             BEW_msg.header.stamp = time_now.to_msg()
             self.publisher.publish(BEW_msg)
-            
-        
             
 
 
