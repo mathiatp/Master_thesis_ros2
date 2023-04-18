@@ -32,8 +32,8 @@ def make_BEW(vessel_mA2: mA2):
                         vessel_mA2.ap_a.pixel_positions_masked,
                         vessel_mA2.as_a.pixel_positions_masked,
                         vessel_mA2.as_s.pixel_positions_masked,
-                        vessel_mA2.black_pixel_pos))#,
-                        # vessel_mA2.ferry_pixel_pos))
+                        vessel_mA2.black_pixel_pos,#))#,
+                        vessel_mA2.ferry_pixel_pos))
 
     rgb_fp_p = calculate_rgb_matrix_for_BEW(vessel_mA2.fp_p.im,vessel_mA2.fp_p.image_mask)
     rgb_fp_f = calculate_rgb_matrix_for_BEW(vessel_mA2.fp_f.im,vessel_mA2.fp_f.image_mask)
@@ -52,8 +52,8 @@ def make_BEW(vessel_mA2: mA2):
                      rgb_ap_a,
                      rgb_as_a,
                      rgb_as_s,
-                     vessel_mA2.black_pixel_rgb))#,
-                    #  vessel_mA2.ferry_pixel_rgb))
+                     vessel_mA2.black_pixel_rgb,#))#,
+                     vessel_mA2.ferry_pixel_rgb))
 
 
     # Delaunay 4

@@ -1,7 +1,7 @@
 from py_undist.calculate_bew_data import calculate_BEW_points_and_mask, calculate_BEW_points_and_rgb_for_interpolation
 from py_undist.cls_Camera import Camera
 from py_undist.file_handling import try_load_vtx_wts
-from py_undist.get_black_fill_pos_rgb import get_black_pixel_pos_and_rgb
+from py_undist.get_black_fill_pos_rgb import get_black_pixel_pos_and_rgb, get_ferry_pixel_pos_and_rgb
 import numpy as np
 from scipy.spatial import Delaunay
 import cv2
@@ -30,6 +30,7 @@ class mA2:
         self._as_s = camera_as_s
         self._black_pixel_pos, self._black_pixel_rgb = get_black_pixel_pos_and_rgb()
         self._vtx, self._wts  = try_load_vtx_wts()
+        self._ferry_pixel_pos, self._ferry_pixel_rgb  = get_ferry_pixel_pos_and_rgb()
         # self._delaunay = self.init_delaunay()
 
     
@@ -205,3 +206,9 @@ class mA2:
     @property
     def black_pixel_rgb(self):
         return self._black_pixel_rgb
+    @property
+    def ferry_pixel_pos(self):
+        return self._ferry_pixel_pos
+    @property
+    def ferry_pixel_rgb(self):
+        return self._ferry_pixel_rgb    
