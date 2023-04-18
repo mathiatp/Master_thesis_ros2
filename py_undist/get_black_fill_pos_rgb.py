@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-
-from config import BEW_IMAGE_HEIGHT, BEW_IMAGE_WIDTH
+from py_undist.config import BEW_IMAGE_HEIGHT, BEW_IMAGE_WIDTH
 
 def get_black_pixel_pos_and_rgb():
     im_red = cv2.imread('resource/Init_images/Fill_empty_middle/BEW_main_func_1_frame_1500x1500px_step_3_8_cameras_mask_red_2.png')

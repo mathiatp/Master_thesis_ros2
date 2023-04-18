@@ -82,6 +82,8 @@ class UndistortNode(Node):
         # Add header
        
         undistorted_msg.header.frame_id = camera_name
+        
+        undistorted_msg.header.stamp = self.get_clock().now().to_msg()
         # Publish undistorted image
         self.publishers[camera_name].publish(undistorted_msg)
 
@@ -140,6 +142,7 @@ def main(args=None):
     #         node.callback(msg)
      
     # Spin node until shutdown
+    skip_im = 0
 
     with Reader(file_path) as reader:
 
@@ -149,6 +152,13 @@ def main(args=None):
             msg = deserialize_cdr(rawdata, connection.msgtype)
             # im = message_to_cvimage(msg,'rgb8')
             time.sleep(0.250)
+            
+            if msg.header.frame_id == 'rgb_cam_fp_p':
+                print('fp_p')
+                skip_im = skip_im +1
+                if skip_im % 5 == 0:
+                    print('Skipped im')
+                    continue
 
             # plt.figure()
             # plt.imshow(im)

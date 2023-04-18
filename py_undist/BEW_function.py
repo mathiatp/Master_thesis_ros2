@@ -1,11 +1,15 @@
 import cProfile
+import os
 import pstats
 import rclpy
 from rclpy.node import Node
+from rclpy import logging
+from rclpy.time import Time
 from sensor_msgs.msg import Image
+from std_msgs.msg import String
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy
 from py_undist.calculate_bew_data import calculate_rgb_matrix_for_BEW, interpolate, make_final_mask_and_pixel_pos, interp_weights
-from py_undist.config import BEW_IMAGE_HEIGHT, BEW_IMAGE_WIDTH
+from py_undist.config import BEW_IMAGE_HEIGHT, BEW_IMAGE_WIDTH, TIME_THRESHOLD_FOR_USING_LAST_IMAGE
 import time
 from py_undist.cls_mA2 import mA2
 from py_undist.cls_Camera import Camera
@@ -128,6 +132,15 @@ class BEWImage(Node):
                         'undistorted_im_ap_a',
                         'undistorted_im_as_a',
                         'undistorted_im_as_s']
+        self.camera_names = ['fp_p',
+                        'fp_f',
+                        'fs_f',
+                        'fs_s',
+                        'ap_p', 
+                        'ap_a',
+                        'as_a',
+                        'as_s',
+                        'BEW']
         self.vessel_mA2 = init_mA2()
         self.vessel_mA2.find_triangle_between_each_cameras()
 
@@ -166,6 +179,10 @@ class BEWImage(Node):
         
         self.subscriptions = []
         self.images_recieved = [None]*8
+        self.images_recieved_dict = dict.fromkeys(self.camera_names,0)
+        del self.images_recieved_dict['BEW']
+        self.recieve_time_last_im_nanosec = dict.fromkeys(self.camera_names,0)
+        self.skip_until_first_BEW_made = 1
         
 
         for topic_name in topic_names:
@@ -185,8 +202,21 @@ class BEWImage(Node):
             QoSProfile(depth=10,
                        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                        reliability=QoSReliabilityPolicy.RELIABLE))
-        self.bridge = CvBridge()    
+        self.bridge = CvBridge()
         
+        # Set up file logging
+        print('Init logger')
+        # log_file_path = 'resource/Logs/BEW_node.log'
+        self.logger = logging.get_logger('BEW_logger')
+        #camera name | time since last image recieved | time since msg sent | 
+        self.logger.info('camera_name;time_since_last_image;message')
+        
+        
+        
+  
+        
+
+
     def msg_to_cv(self, msg):
         cv_image = None
         try:
@@ -205,18 +235,52 @@ class BEWImage(Node):
             self.get_logger().error('Error converting OpenCV image to ROS message: %s' % str(e))
         return msg
 
+    def check_image_timers(self):
+        threshold_nanosec = TIME_THRESHOLD_FOR_USING_LAST_IMAGE
+        current_time = self.get_clock().now().nanoseconds
+        for name in self.camera_names:
+            elapsed_time = current_time - self.recieve_time_last_im_nanosec[name]
+            if elapsed_time > threshold_nanosec and name != 'BEW':
+                return name
+        return False
+
     def image_callback(self, msg):
         # Extract the camera index from the topic name
         id = msg.header.frame_id
+        # print('Time msg: ' + str(msg.header.stamp))
+
+        # msg_sent_time = Time.from_msg(msg.header.stamp)
+        # msg_sent_time_nano = msg_sent_time.nanoseconds
+        # self.time_since_last_im[id] = msg_sent_time_nano
+        # print('Time msg: ' + str(msg_sent_time_nano))
+        
+        recieve_time_nanosec = self.get_clock().now().nanoseconds
+        diff_time = recieve_time_nanosec - self.recieve_time_last_im_nanosec[id]
+        self.recieve_time_last_im_nanosec[id] = recieve_time_nanosec
+        #camera name | time since last image recieved[ms]      
+        self.logger.info(id+';'+str(diff_time/10**6) + ';')
+        
+        self.images_recieved_dict[id] = 1
+        camera_delayed = self.check_image_timers()
+        if camera_delayed and self.skip_until_first_BEW_made == 0:
+            # print('Camera ' + camera_delayed + ' was delayed. Using last image.')
+            self.logger.info(camera_delayed + ';0;' + 'Delayed. Using last image.')
+            self.images_recieved_dict[camera_delayed] = 1
+        
+        #camera name | time since last image recieved | time since msg sent | 
+        
+        
         # print(id)
         # id = topic_name[16:]
         # print('Recieved image from: '+str(id))
-
+        
         if(id =='fp_p'):
+            
             self.vessel_mA2.fp_p._im = self.msg_to_cv(msg)
             self.images_recieved[0] = 1
 
         elif(id =='fp_f'):
+
             self.vessel_mA2.fp_f._im = self.msg_to_cv(msg)
             self.images_recieved[1] = 1
             
@@ -246,18 +310,39 @@ class BEWImage(Node):
         
 
         # If we have received images from all 8 cameras, combine them and publish the result
-        if all(self.images_recieved):
+        if all(images == 1 for images in self.images_recieved_dict.values()):
+            self.skip_until_first_BEW_made = 0
             
             BEW_im = make_BEW(self.vessel_mA2)
             self.images_recieved = [None]*8
+            self.images_recieved_dict = dict.fromkeys(self.images_recieved_dict.keys(),0)
             BEW_msg = self.cv_to_msg(BEW_im)
+
+            time_now = self.get_clock().now()
+            time_now_nanosec = time_now.nanoseconds
+            
+            diff_time_BEW = time_now_nanosec - self.recieve_time_last_im_nanosec['BEW']
+
+            self.recieve_time_last_im_nanosec['BEW'] = time_now_nanosec
+            self.logger.info('BEW'+';'+str(diff_time_BEW/10**6)+';')
+            
+            BEW_msg.header.stamp = time_now.to_msg()
             self.publisher.publish(BEW_msg)
+            
+        
             
 
 
 def main(args=None):
-    
+    log_file_path = 'resource/Logs/BEW_node.log'
+    ###WARNING This is a process-wide setting, so it applies to all nodes in that process.###########
+    os.environ['ROS_LOG_DIR'] = log_file_path
+    os.environ['RCUTILS_CONSOLE_OUTPUT_FORMAT'] = '[{severity} {time}] [{name}]: {message}'
+    start_time = time.time()
     rclpy.init(args=args)
+    
+    
+    logging.initialize()
     # pr = cProfile.Profile()
     # pr.enable()
     bew_image = BEWImage()
@@ -279,11 +364,17 @@ def main(args=None):
         pass
     finally:
         bew_image.destroy_node()
-        rclpy.shutdown()   
-    
+        rclpy.shutdown() 
+
+    logging.shutdown()
+
     pr.disable()
     stats = pstats.Stats(pr)
-    stats.dump_stats(filename='/home/mathias/Documents/ros2_ws_master/src/py_undist/py_undist/Profiler_stats/test_first_attempt_ros2_node1200x1200.prof') # prøv med absoultt file path
+    start_time_struct = time.localtime(int(start_time))
+    start_time_str = str(start_time_struct.tm_mon)+'_'+str(start_time_struct.tm_mday) + '_' + str(start_time_struct.tm_hour) + '_' + str(start_time_struct.tm_hour) + '_' + str(start_time_struct.tm_min) + '_' + str(start_time_struct.tm_sec)
+    
+    stats_file_path = 'py_undist/Profiler_stats/ros2_node_' + str(BEW_IMAGE_HEIGHT)+'x'+str(BEW_IMAGE_WIDTH)+ '_time_'+start_time_str+'.prof'
+    stats.dump_stats(filename=stats_file_path) # prøv med absoultt file path
     
     # try:
     #     while rclpy.ok():
