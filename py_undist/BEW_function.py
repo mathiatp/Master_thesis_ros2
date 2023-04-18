@@ -318,7 +318,7 @@ class BEWImage(Node):
 
 
 def main(args=None):
-    log_file_path = 'resource/Logs/BEW_node.log'
+    log_file_path = 'log/BEW_node'
     ###WARNING This is a process-wide setting, so it applies to all nodes in that process.###########
     os.environ['ROS_LOG_DIR'] = log_file_path
     os.environ['RCUTILS_CONSOLE_OUTPUT_FORMAT'] = '[{severity} {time}] [{name}]: {message}'
@@ -357,7 +357,7 @@ def main(args=None):
     start_time_struct = time.localtime(int(start_time))
     start_time_str = str(start_time_struct.tm_mon)+'_'+str(start_time_struct.tm_mday) + '_' + str(start_time_struct.tm_hour) + '_' + str(start_time_struct.tm_hour) + '_' + str(start_time_struct.tm_min) + '_' + str(start_time_struct.tm_sec)
     
-    stats_file_path = 'py_undist/Profiler_stats/ros2_node_' + str(BEW_IMAGE_HEIGHT)+'x'+str(BEW_IMAGE_WIDTH)+ '_time_'+start_time_str+'.prof'
+    stats_file_path = 'log/Profiler_stats/ros2_node_' + str(BEW_IMAGE_HEIGHT)+'x'+str(BEW_IMAGE_WIDTH)+ '_time_'+start_time_str+'.prof'
     stats.dump_stats(filename=stats_file_path) # prøv med absoultt file path
     
     # try:
